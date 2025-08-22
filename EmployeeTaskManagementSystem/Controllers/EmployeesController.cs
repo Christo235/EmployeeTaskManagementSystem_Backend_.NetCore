@@ -25,16 +25,22 @@ namespace EmployeeTaskManagementSystem.Controllers
             return Ok(await _db.Employees.AsNoTracking().ToListAsync());
         }
 
-       
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Employees>> GetEmployee(int id)
         {
-            var emp = await _db.Employees.FindAsync(id);
+            var emp = await _db.Employees
+                .Include(e => e.Tasks)   
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.EmployeeID == id);
+
             if (emp == null) return NotFound();
+
             return Ok(emp);
         }
 
-      
+
+
         [HttpPost]
         public async Task<ActionResult<Employees>> CreateEmployee([FromBody] Employees emp)
         {

@@ -4,6 +4,10 @@ using EmployeeTaskManagementSystem.Db_Con_Datas;
 using EmployeeTaskManagementSystem.Db_Entity_Class;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 
 namespace EmployeeTaskManagementSystem.Controllers
@@ -12,12 +16,18 @@ namespace EmployeeTaskManagementSystem.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly DbData _db;
 
-        public AuthController(DbData db)
+
+        private readonly DbData _db;
+        private readonly IConfiguration _config;
+
+        public AuthController(DbData db, IConfiguration config)
         {
-            _db = db;  
+            _db = db;
+            _config = config;
         }
+
+
 
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
@@ -26,7 +36,7 @@ namespace EmployeeTaskManagementSystem.Controllers
             {
                 return BadRequest(new AuthRegisterResponseDto
                 {
-                    Message = "Email already exists",
+                    Rp_Message = "Email already exists",
                 });
             }
 
@@ -49,12 +59,12 @@ namespace EmployeeTaskManagementSystem.Controllers
 
             var response = new AuthRegisterResponseDto
             {
-                EmployeeID = emp.EmployeeID,
-                Name = emp.Name,
-                Role = emp.Role,
-                Email = emp.Email,
-                Department = emp.Department,
-                Message = "Registered Successfully."
+                Rp_EmployeeID = emp.EmployeeID,
+                Rp_Name = emp.Name,
+                Rp_Role = emp.Role,
+                Rp_Email = emp.Email,
+                Rp_Department = emp.Department,
+                Rp_Message = "Registered Successfully."
             };
 
             return Ok(response);
@@ -76,26 +86,48 @@ namespace EmployeeTaskManagementSystem.Controllers
             {
                 return Unauthorized(new AuthLoginResponseDto
                 {
-                    Message = "Invalid email or password",
-                  
+                    Rp_Message = "Invalid email or password"
                 });
             }
 
+           
+            string token = GenerateJwtToken(employee);
+
             return Ok(new AuthLoginResponseDto
             {
-                Message = "Login Successful",
-                Token = null,
-                EmployeeID = employee.EmployeeID,
-                Name = employee.Name
+                Rp_Message = "Login Successful",
+                Rp_Token = token,
+                Rp_EmployeeID = employee.EmployeeID,
+                Rp_Name = employee.Name,
+               
             });
         }
 
 
+        private string GenerateJwtToken(Employees employee)
+        {
+            var jwtSettings = _config.GetSection("JwtSettings");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]));
 
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, employee.EmployeeID.ToString()),
+        new Claim(ClaimTypes.Name, employee.Name),
+        new Claim(ClaimTypes.Email, employee.Email),
+        new Claim(ClaimTypes.Role, employee.Role ?? "User") // default role
+    };
 
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var token = new JwtSecurityToken(
+                issuer: jwtSettings["Issuer"],
+                audience: jwtSettings["Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(3),
+                signingCredentials: creds
+            );
 
-
-
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
 
 
 
