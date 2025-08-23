@@ -49,18 +49,25 @@ namespace EmployeeTaskManagementSystem.Controllers
             return CreatedAtAction(nameof(GetEmployee), new { id = emp.EmployeeID }, emp);
         }
 
-    
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateEmployee(int id, [FromBody] Employees emp)
         {
-            if (id != emp.EmployeeID) return BadRequest();
+            var existing = await _db.Employees.FindAsync(id);
+            if (existing == null) return NotFound();
 
-            _db.Entry(emp).State = EntityState.Modified;
+            
+            existing.Name = emp.Name;
+            existing.Email = emp.Email;
+            existing.Department = emp.Department;
+            existing.Joining_Date = emp.Joining_Date;
+
             await _db.SaveChangesAsync();
             return NoContent();
         }
 
-       
+
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEmployee(int id)
         {

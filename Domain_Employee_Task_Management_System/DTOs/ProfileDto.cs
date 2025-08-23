@@ -6,11 +6,8 @@ using System.Threading.Tasks;
 
 namespace Domain_Employee_Task_Management_System.DTOs
 {
-    public class LoginDto
+    public class ProfileDto
     {
-        
-        public string Email { get; set; }
-        public string Password { get; set; }
-
+        public int EmployeeID { get; set; }
     }
 }

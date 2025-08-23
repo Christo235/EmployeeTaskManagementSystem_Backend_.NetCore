@@ -47,6 +47,7 @@ namespace EmployeeTaskManagementSystem.Controllers
             {
                 Name = registerDto.Name,
                 Email = registerDto.Email,
+                
                 Password = registerDto.Password,
                 Role = registerDto.Role,
                 Department = registerDto.Department,
@@ -114,7 +115,7 @@ namespace EmployeeTaskManagementSystem.Controllers
         new Claim(ClaimTypes.NameIdentifier, employee.EmployeeID.ToString()),
         new Claim(ClaimTypes.Name, employee.Name),
         new Claim(ClaimTypes.Email, employee.Email),
-        new Claim(ClaimTypes.Role, employee.Role ?? "User") // default role
+        new Claim(ClaimTypes.Role, employee.Role ?? "User") 
     };
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
